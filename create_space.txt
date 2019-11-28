@@ -1,0 +1,1 @@
+echo "create space test(partition_num=5,replica_factor=3)" | ./bin/nebula -u user -p password --addr=127.0.0.1 --port=3699

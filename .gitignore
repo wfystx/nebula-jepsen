@@ -1,0 +1,17 @@
+*/.DStore
+docker/data/
+docker/logs/
+nebula/.hgignore
+nebula/store/
+pom.xml
+pom.xml.asc
+*.class
+/classes/
+nebula/target
+/checkouts/
+.lein-deps-sum
+.lein-repl-history
+.lein-plugins/
+.lein-failures
+.nrepl-port
+.cpcache/

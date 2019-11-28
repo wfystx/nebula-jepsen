@@ -1,0 +1,241 @@
+version: '3.4'
+services:
+  metad:
+    image: vesoft/nebula-metad:nightly
+    container_name: nebula-metad
+    hostname: metad
+    privileged: true
+    environment:
+      USER: root
+    command:
+      - --meta_server_addrs=172.28.1.1:45500
+      - --local_ip=172.28.1.1
+      - --ws_ip=172.28.1.1
+      - --port=45500
+      - --load_data_interval_secs=5
+      - --data_path=/data/meta
+      - --log_dir=/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://172.28.1.1:11000/status"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - 11000
+      - 11002
+    volumes:
+      - ./data/meta:/data/meta
+      - ./logs/meta:/logs
+    networks:
+      nebula-net:
+        ipv4_address: 172.28.1.1
+    restart: on-failure
+
+  n1:
+    image: wfystx/nebula-node:v4
+    container_name: nebula-n1
+    hostname: n1
+    privileged: true
+    environment:
+      USER: root
+    command:
+      - --meta_server_addrs=172.28.1.1:45500
+      - --local_ip=172.28.2.1
+      - --ws_ip=172.28.2.1
+      - --port=44500
+      - --data_path=/data/storage
+      - --log_dir=/logs
+      - --storage_kv_mode=true
+    depends_on:
+      - metad
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://172.28.2.1:12000/status"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - 12000
+      - 12002
+    volumes:
+      - ./data/n1:/data/storage
+      - ./logs/n1:/logs
+    networks:
+      nebula-net:
+        ipv4_address: 172.28.2.1
+    restart: on-failure
+
+  n2:
+    image: wfystx/nebula-node:v4
+    container_name: nebula-n2
+    hostname: n2
+    privileged: true
+    environment:
+      USER: root
+    command:
+      - --meta_server_addrs=172.28.1.1:45500
+      - --local_ip=172.28.2.2
+      - --ws_ip=172.28.2.2
+      - --port=44500
+      - --data_path=/data/storage
+      - --log_dir=/logs
+      - --storage_kv_mode=true
+    depends_on:
+      - metad
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://172.28.2.2:12000/status"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - 12000
+      - 12002
+    volumes:
+      - ./data/n2:/data/storage
+      - ./logs/n2:/logs
+    networks:
+      nebula-net:
+        ipv4_address: 172.28.2.2
+    restart: on-failure
+
+  n3:
+    image: wfystx/nebula-node:v4
+    container_name: nebula-n3
+    hostname: n3
+    privileged: true
+    environment:
+      USER: root
+    command:
+      - --meta_server_addrs=172.28.1.1:45500
+      - --local_ip=172.28.2.3
+      - --ws_ip=172.28.2.3
+      - --port=44500
+      - --data_path=/data/storage
+      - --log_dir=/logs
+      - --storage_kv_mode=true
+    depends_on:
+      - metad
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://172.28.2.3:12000/status"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - 12000
+      - 12002
+    volumes:
+      - ./data/n3:/data/storage
+      - ./logs/n3:/logs
+    networks:
+      nebula-net:
+        ipv4_address: 172.28.2.3
+    restart: on-failure
+  
+  n4:
+    image: wfystx/nebula-node:v4
+    container_name: nebula-n4
+    hostname: n4
+    privileged: true
+    environment:
+      USER: root
+    command:
+      - --meta_server_addrs=172.28.1.1:45500
+      - --local_ip=172.28.2.4
+      - --ws_ip=172.28.2.4
+      - --port=44500
+      - --data_path=/data/storage
+      - --log_dir=/logs
+      - --storage_kv_mode=true
+    depends_on:
+      - metad
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://172.28.2.4:12000/status"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - 12000
+      - 12002
+    volumes:
+      - ./data/n4:/data/storage
+      - ./logs/n4:/logs
+    networks:
+      nebula-net:
+        ipv4_address: 172.28.2.4
+    restart: on-failure
+
+  n5:
+    image: wfystx/nebula-node:v4
+    container_name: nebula-n5
+    hostname: n5
+    privileged: true
+    environment:
+      USER: root
+    command:
+      - --meta_server_addrs=172.28.1.1:45500
+      - --local_ip=172.28.2.5
+      - --ws_ip=172.28.2.5
+      - --port=44500
+      - --data_path=/data/storage
+      - --log_dir=/logs
+      - --storage_kv_mode=true
+    depends_on:
+      - metad
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://172.28.2.5:12000/status"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - 12000
+      - 12002
+    volumes:
+      - ./data/n5:/data/storage
+      - ./logs/n5:/logs
+    networks:
+      nebula-net:
+        ipv4_address: 172.28.2.5
+    restart: on-failure
+
+  graphd:
+    image: vesoft/nebula-graphd:nightly
+    container_name: nebula-graphd
+    privileged: true
+    environment:
+      USER: root
+    command:
+      - --meta_server_addrs=172.28.1.1:45500
+      - --port=3699
+      - --ws_ip=172.28.3.1
+      - --load_data_interval_secs=5
+      - --log_dir=/logs
+    depends_on:
+      - metad
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://172.28.3.1:13000/status"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    ports:
+      - "3699:3699"
+      - 13000
+      - 13002
+    volumes:
+      - ./logs/graph:/logs
+    networks:
+      nebula-net:
+        ipv4_address: 172.28.3.1
+    restart: on-failure
+
+networks:
+  nebula-net:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.28.0.0/16
