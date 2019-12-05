@@ -20,7 +20,6 @@
   [metaHost metaPort]
   (let [metaClient (MetaClientImpl. metaHost metaPort)]
        (def storageClient (StorageClientImpl. metaClient))
-       (.switchSpace storageClient default-space)
        storageClient))
 
 (defn connect
@@ -34,11 +33,9 @@
 
 (defn put
   ([storageClient k v]
-    (let [part (+ (mod (.hash storageClient k) 5) 1)]
-      (.put storageClient part k v))))
+    (.put storageClient default-space k v)))
 
 (defn get
   ([storageClient k]
-    (let [part (+ (mod (.hash storageClient k) 5) 1)]
-      (.get storageClient part k))))
+    (.get storageClient default-space k)))
 

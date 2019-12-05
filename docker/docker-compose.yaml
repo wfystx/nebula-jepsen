@@ -33,170 +33,115 @@ services:
     restart: on-failure
 
   n1:
-    image: wfystx/nebula-node:v4
+    image: wfystx/nebula-node:latest
     container_name: nebula-n1
     hostname: n1
+    env_file: ./secret/node.env
     privileged: true
     environment:
       USER: root
-    command:
-      - --meta_server_addrs=172.28.1.1:45500
-      - --local_ip=172.28.2.1
-      - --ws_ip=172.28.2.1
-      - --port=44500
-      - --data_path=/data/storage
-      - --log_dir=/logs
-      - --storage_kv_mode=true
     depends_on:
       - metad
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://172.28.2.1:12000/status"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
     ports:
       - 12000
       - 12002
     volumes:
       - ./data/n1:/data/storage
       - ./logs/n1:/logs
+      - ./run.sh:/run.sh
+      - ./conf/1/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:
         ipv4_address: 172.28.2.1
     restart: on-failure
 
   n2:
-    image: wfystx/nebula-node:v4
+    image: wfystx/nebula-node:latest
     container_name: nebula-n2
     hostname: n2
+    env_file: ./secret/node.env
     privileged: true
     environment:
       USER: root
-    command:
-      - --meta_server_addrs=172.28.1.1:45500
-      - --local_ip=172.28.2.2
-      - --ws_ip=172.28.2.2
-      - --port=44500
-      - --data_path=/data/storage
-      - --log_dir=/logs
-      - --storage_kv_mode=true
     depends_on:
       - metad
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://172.28.2.2:12000/status"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
     ports:
       - 12000
       - 12002
     volumes:
       - ./data/n2:/data/storage
       - ./logs/n2:/logs
+      - ./run.sh:/run.sh
+      - ./conf/2/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:
         ipv4_address: 172.28.2.2
     restart: on-failure
 
   n3:
-    image: wfystx/nebula-node:v4
+    image: wfystx/nebula-node:latest
     container_name: nebula-n3
     hostname: n3
+    env_file: ./secret/node.env
     privileged: true
     environment:
       USER: root
-    command:
-      - --meta_server_addrs=172.28.1.1:45500
-      - --local_ip=172.28.2.3
-      - --ws_ip=172.28.2.3
-      - --port=44500
-      - --data_path=/data/storage
-      - --log_dir=/logs
-      - --storage_kv_mode=true
     depends_on:
       - metad
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://172.28.2.3:12000/status"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
     ports:
       - 12000
       - 12002
     volumes:
       - ./data/n3:/data/storage
       - ./logs/n3:/logs
+      - ./run.sh:/run.sh
+      - ./conf/3/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:
         ipv4_address: 172.28.2.3
     restart: on-failure
   
   n4:
-    image: wfystx/nebula-node:v4
+    image: wfystx/nebula-node:latest
     container_name: nebula-n4
     hostname: n4
+    env_file: ./secret/node.env
     privileged: true
     environment:
       USER: root
-    command:
-      - --meta_server_addrs=172.28.1.1:45500
-      - --local_ip=172.28.2.4
-      - --ws_ip=172.28.2.4
-      - --port=44500
-      - --data_path=/data/storage
-      - --log_dir=/logs
-      - --storage_kv_mode=true
     depends_on:
       - metad
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://172.28.2.4:12000/status"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
     ports:
       - 12000
       - 12002
     volumes:
       - ./data/n4:/data/storage
       - ./logs/n4:/logs
+      - ./run.sh:/run.sh
+      - ./conf/4/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:
         ipv4_address: 172.28.2.4
     restart: on-failure
 
   n5:
-    image: wfystx/nebula-node:v4
+    image: wfystx/nebula-node:latest
     container_name: nebula-n5
     hostname: n5
+    env_file: ./secret/node.env
     privileged: true
     environment:
       USER: root
-    command:
-      - --meta_server_addrs=172.28.1.1:45500
-      - --local_ip=172.28.2.5
-      - --ws_ip=172.28.2.5
-      - --port=44500
-      - --data_path=/data/storage
-      - --log_dir=/logs
-      - --storage_kv_mode=true
     depends_on:
       - metad
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://172.28.2.5:12000/status"]
-      interval: 1m30s
-      timeout: 10s
-      retries: 3
-      start_period: 20s
     ports:
       - 12000
       - 12002
     volumes:
       - ./data/n5:/data/storage
       - ./logs/n5:/logs
+      - ./run.sh:/run.sh
+      - ./conf/5/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:
         ipv4_address: 172.28.2.5

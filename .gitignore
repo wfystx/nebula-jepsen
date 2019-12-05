@@ -1,13 +1,13 @@
 */.DStore
 docker/data/
 docker/logs/
-nebula/.hgignore
+docker/secret/*
 nebula/store/
 pom.xml
 pom.xml.asc
 *.class
 /classes/
-nebula/target
+/target/
 /checkouts/
 .lein-deps-sum
 .lein-repl-history

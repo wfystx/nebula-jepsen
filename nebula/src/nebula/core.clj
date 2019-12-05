@@ -19,10 +19,11 @@
   (:import [com.vesoft.nebula.storage.client StorageClientImpl]
            [com.vesoft.nebula.graph.client GraphClientImpl]))
 
-(def dir     "/opt/nebula")
-(def binary  "nebula")
-(def logfile (str dir "/nebula.log"))
-(def pidfile (str dir "/nebula.pid"))
+(def dir     "/usr/local/nebula/")
+(def binary  (str dir "bin/nebula-storaged"))
+(def logfile "/root/nebula.log")
+(def pidfile "/root/pids/nebula-storaged.pid")
+(def datafile "/data/storage/nebula/*")
 
 (def default-port 44500)
 (def default-space 1)
@@ -36,8 +37,47 @@
 (defn r   [_ _] {:type :invoke, :f :read, :value nil})
 (defn w   [_ _] {:type :invoke, :f :write, :value (rand-int 5)})
 
+(defn running?
+  "Is the service running?"
+  [binary pidfile]
+  (try
+    (c/exec :start-stop-daemon :--status
+            :--pidfile pidfile
+            :--exec    binary)
+    true
+    (catch RuntimeException _ false)))
+
+(defn start-nebula! 
+  "Starts nebula storage service."
+  [node]
+  (info "starting storage node" node)
+  (c/su
+    (assert (not (running? binary pidfile)))
+    (c/exec :start-stop-daemon :--start
+            :--background
+            :--make-pidfile
+            :--pidfile  pidfile
+            :--chdir    dir
+            :--exec     binary
+            :--
+            "--flagfile"
+            "/usr/local/nebula/etc/nebula-storaged.conf")
+    (info node "started")))
+
+(defn stop-nebula!
+  "Stops nebula storage service."
+  [node]
+  (info "stopping storage node" node)
+  (c/su
+    (cu/grepkill! :nebula-storaged)
+    (c/exec :rm :-rf pidfile)))
+
+(defn flag-file
+  []
+  (str dir "etc/nebula-storaged.conf"))
+
 (defn create-space
-  "Not using yet. Test space will be created by ./start script"
+  "Not using yet. Test space will be created by ./up.sh script"
   [graphHost graphPort]
   (let [graphClient (GraphClientImpl. graphHost graphPort)]
        (.connect graphClient default-username default-password)
@@ -53,16 +93,19 @@
   [version]
   (reify db/DB
     (setup! [_ test node]
-      ;(info node "Depolying Nebula KV Test Environment")
-      )
+      (c/su 
+        (start-nebula! node) ;start nebula storage in each node
+        (Thread/sleep 3000)))
 
     (teardown! [_ test node]
-      (info "tearing down Nebula" node)
-      (c/su (c/exec :rm :-rf dir)))
-      
+      (stop-nebula! node) ;stop
+      (Thread/sleep 3000)
+      (c/su 
+        (c/exec :rm :-rf (c/lit "/data/storage/nebula/*")))) ;clean data stored in storage node
+        
     db/LogFiles
-    (log-files [_ test node]
-      [logfile])))
+      (log-files [_ test node]
+        [logfile])))
 
 (defn parse-long
   "Parses a string to a Long. Passes through `nil`."
@@ -75,19 +118,17 @@
   (open! [this test node] this)
 
   (setup! [this test node]
-    (assoc this :conn (nclient/init default-meta-host default-meta-port)))
+    (assoc this :conn (nclient/init default-meta-host default-meta-port))) ; :conn is a object of StorageClient
 
   (invoke! [this test op]
-    (let [k (get-random-key)
-          crash (if (= :read (:f op)) :fail :info)]
-      (try
-          (case (:f op)
-            :read (assoc op :type :ok, :value (-> conn
-                                                  (nclient/get k)))
-            :write (do (nclient/put conn k (:value op))
-                                (assoc op :type :ok)))
-            (catch java.lang.NullPointerException e
-              (assoc op :type :fail, :error :nullpointer_exception)))))
+    (try
+        (case (:f op)
+          :read (assoc op :type :ok, :value (-> conn
+                                                (nclient/get "f"))) ; get the value of a specific key from storage
+          :write (do (nclient/put conn "f" (:value op)) ; put a key : value pair to storage
+                              (assoc op :type :ok)))
+          (catch java.lang.NullPointerException e
+            (assoc op :type :fail, :error :nullpointer_exception)))) ; basically this will happen when there is no that key
 
   (teardown! [this test])
 
@@ -103,14 +144,14 @@
           :os   centos/os
           :db   (db "v1.0.0")
           :client (Client. nil)
-          :nemesis (nemesis/partition-random-halves)
+          :nemesis nemesis/noop
           :checker (checker/compose
                      {:perf     (checker/perf)
                       :timeline (timeline/html)
-                      :linear (checker/linearizable {:model (model/register)
-                                                     :algorithm :linear})})
+                      :linear   (checker/linearizable {:model (model/register)
+                                                       :algorithm :linear})})
           :generator (->> (gen/mix [r w])
-                          (gen/stagger 1/2)
+                          (gen/stagger 3)
                           (gen/nemesis
                             (gen/seq (cycle [(gen/sleep 5)
                                              {:type :info, :f :start}

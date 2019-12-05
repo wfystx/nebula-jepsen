@@ -1,20 +1,28 @@
-#!/bin/bash
-password=root
-echo 'y' | ssh-keygen -f $HOME/.ssh/id_rsa -t rsa -N ''
+#!/bin/sh
 
-echo "" > ~/.ssh/known_hosts
+: "${SSH_PRIVATE_KEY?SSH_PRIVATE_KEY is empty, please use up.sh}"
+: "${SSH_PUBLIC_KEY?SSH_PUBLIC_KEY is empty, please use up.sh}"
 
-for f in $(seq 1 5)
-  do
-    ssh-keyscan -t rsa n$f >> ~/.ssh/known_hosts
-    expect <<-EOF
-    set timeout 5
-    spawn ssh-copy-id -i n$f
-    expect {
-    "yes/no" { send "yes\n";exp_continue }
-    "password:" { send "$password\n" }
-    }
-  interact
-  expect eof
+if [ ! -f ~/.ssh/known_hosts ]; then
+    mkdir -m 700 ~/.ssh
+    echo $SSH_PRIVATE_KEY | perl -p -e 's/↩/\n/g' > ~/.ssh/id_rsa
+    chmod 600 ~/.ssh/id_rsa
+    echo $SSH_PUBLIC_KEY > ~/.ssh/id_rsa.pub
+    echo > ~/.ssh/known_hosts
+    for f in $(seq 1 5);do
+	ssh-keyscan -t rsa n$f >> ~/.ssh/known_hosts
+    done
+fi
+
+# TODO: assert that SSH_PRIVATE_KEY==~/.ssh/id_rsa
+
+cat <<EOF 
+==================================
+Welcome to Nebula-Jepsen on Docker
+        Hello from Freddie
+==================================
+cd /jepsen_dev/nebula
+then
+lein run test
+or whatever you want
 EOF
-done
