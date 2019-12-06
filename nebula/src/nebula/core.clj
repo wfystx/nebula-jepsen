@@ -24,6 +24,7 @@
 (def logfile "/root/nebula.log")
 (def pidfile "/root/pids/nebula-storaged.pid")
 (def datafile "/data/storage/nebula/*")
+(def flag-file (str dir "etc/nebula-storaged.conf"))
 
 (def default-port 44500)
 (def default-space 1)
@@ -49,7 +50,7 @@
 
 (defn start-nebula! 
   "Starts nebula storage service."
-  [node]
+  [node test]
   (info "starting storage node" node)
   (c/su
     (assert (not (running? binary pidfile)))
@@ -61,20 +62,30 @@
             :--exec     binary
             :--
             "--flagfile"
-            "/usr/local/nebula/etc/nebula-storaged.conf")
+            flag-file
+            :>> logfile
+            (c/lit "2>&1"))
     (info node "started")))
 
 (defn stop-nebula!
   "Stops nebula storage service."
-  [node]
+  [node test]
   (info "stopping storage node" node)
   (c/su
     (cu/grepkill! :nebula-storaged)
     (c/exec :rm :-rf pidfile)))
 
-(defn flag-file
-  []
-  (str dir "etc/nebula-storaged.conf"))
+(def kill-node
+  "Kills random node"
+  (nemesis/node-start-stopper
+    rand-nth
+    (fn start [test node] (stop-nebula! node test))
+    (fn stop [test node] (start-nebula! node test))))
+
+(def partition-random-halves
+  (nemesis/partition-random-halves))
+
+(def noop nemesis/noop)
 
 (defn create-space
   "Not using yet. Test space will be created by ./up.sh script"
@@ -94,14 +105,14 @@
   (reify db/DB
     (setup! [_ test node]
       (c/su 
-        (start-nebula! node) ;start nebula storage in each node
+        (start-nebula! node test) ;start nebula storage in each node
         (Thread/sleep 3000)))
 
     (teardown! [_ test node]
-      (stop-nebula! node) ;stop
+      (stop-nebula! node test) ;stop
       (Thread/sleep 3000)
       (c/su 
-        (c/exec :rm :-rf (c/lit "/data/storage/nebula/*")))) ;clean data stored in storage node
+        (c/exec :rm :-rf (c/lit datafile)))) ;clean data stored in storage node
         
     db/LogFiles
       (log-files [_ test node]
@@ -123,10 +134,10 @@
   (invoke! [this test op]
     (try
         (case (:f op)
-          :read (assoc op :type :ok, :value (-> conn
-                                                (nclient/get "f"))) ; get the value of a specific key from storage
-          :write (do (nclient/put conn "f" (:value op)) ; put a key : value pair to storage
-                              (assoc op :type :ok)))
+          :read (let [v (nclient/get conn "f")]
+                    (assoc op :type (if (= v nil) :fail :ok), :value v)) ; get the value of a specific key from storage
+          :write (let [res (nclient/put conn "f" (:value op))] ; put a key : value pair to storage
+                    (assoc op :type (if (false? res) :fail :ok))))
           (catch java.lang.NullPointerException e
             (assoc op :type :fail, :error :nullpointer_exception)))) ; basically this will happen when there is no that key
 
@@ -144,7 +155,7 @@
           :os   centos/os
           :db   (db "v1.0.0")
           :client (Client. nil)
-          :nemesis nemesis/noop
+          :nemesis kill-node
           :checker (checker/compose
                      {:perf     (checker/perf)
                       :timeline (timeline/html)
