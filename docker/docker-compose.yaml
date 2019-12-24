@@ -48,7 +48,6 @@ services:
     volumes:
       - ./data/n1:/data/storage
       - ./logs/n1:/logs
-      - ./run.sh:/run.sh
       - ./conf/1/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:
@@ -71,7 +70,6 @@ services:
     volumes:
       - ./data/n2:/data/storage
       - ./logs/n2:/logs
-      - ./run.sh:/run.sh
       - ./conf/2/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:
@@ -94,7 +92,6 @@ services:
     volumes:
       - ./data/n3:/data/storage
       - ./logs/n3:/logs
-      - ./run.sh:/run.sh
       - ./conf/3/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:
@@ -117,7 +114,6 @@ services:
     volumes:
       - ./data/n4:/data/storage
       - ./logs/n4:/logs
-      - ./run.sh:/run.sh
       - ./conf/4/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:
@@ -140,7 +136,6 @@ services:
     volumes:
       - ./data/n5:/data/storage
       - ./logs/n5:/logs
-      - ./run.sh:/run.sh
       - ./conf/5/nebula-storaged.conf:/usr/local/nebula/etc/nebula-storaged.conf
     networks:
       nebula-net:

@@ -21,7 +21,7 @@
 
 (def dir     "/usr/local/nebula/")
 (def binary  (str dir "bin/nebula-storaged"))
-(def logfile "/root/nebula.log")
+(def logfile (str dir "logs/nebula-storaged.log"))
 (def pidfile "/root/pids/nebula-storaged.pid")
 (def datafile "/data/storage/nebula/*")
 (def flag-file (str dir "etc/nebula-storaged.conf"))
@@ -34,9 +34,6 @@
 (def default-graph-port 3699)
 (def default-username "user")
 (def default-password "password")
-
-(defn r   [_ _] {:type :invoke, :f :read, :value nil})
-(defn w   [_ _] {:type :invoke, :f :write, :value (rand-int 5)})
 
 (defn running?
   "Is the service running?"
@@ -75,18 +72,6 @@
     (cu/grepkill! :nebula-storaged)
     (c/exec :rm :-rf pidfile)))
 
-(def kill-node
-  "Kills random node"
-  (nemesis/node-start-stopper
-    rand-nth
-    (fn start [test node] (stop-nebula! node test))
-    (fn stop [test node] (start-nebula! node test))))
-
-(def partition-random-halves
-  (nemesis/partition-random-halves))
-
-(def noop nemesis/noop)
-
 (defn create-space
   "Not using yet. Test space will be created by ./up.sh script"
   [graphHost graphPort]
@@ -94,10 +79,6 @@
        (.connect graphClient default-username default-password)
        (.execute graphClient "create space test(partition_num=5,replica_factor=3)"))
 )
-
-(defn get-random-key
-  []
-  (+ (rand-int 5) 1))
 
 (defn db
   "Nebula DB"
@@ -118,62 +99,32 @@
       (log-files [_ test node]
         [logfile])))
 
-(defn parse-long
-  "Parses a string to a Long. Passes through `nil`."
-  [s]
-  (when s (Long/parseLong s)))
+(defn generator
+  [operations time-limit]
+  (->> (gen/mix operations)
+       (gen/stagger 3)
+       (gen/nemesis
+        (gen/seq (cycle [(gen/sleep 10)
+          {:type :info, :f :start}
+          (gen/sleep 20)
+          {:type :info, :f :stop}])))
+       (gen/time-limit time-limit)))
 
-(defrecord Client [conn]
-  client/Client
+(defn checker
+  [details]
+  (checker/compose
+    {:perf     (checker/perf)
+     :timeline (timeline/html)
+     :details  details}))
 
-  (open! [this test node] this)
-
-  (setup! [this test node]
-    (assoc this :conn (nclient/init default-meta-host default-meta-port))) ; :conn is a object of StorageClient
-
-  (invoke! [this test op]
-    (try
-        (case (:f op)
-          :read (let [v (nclient/get conn "f")]
-                    (assoc op :type (if (= v nil) :fail :ok), :value v)) ; get the value of a specific key from storage
-          :write (let [res (nclient/put conn "f" (:value op))] ; put a key : value pair to storage
-                    (assoc op :type (if (false? res) :fail :ok))))
-          (catch java.lang.NullPointerException e
-            (assoc op :type :fail, :error :nullpointer_exception)))) ; basically this will happen when there is no that key
-
-  (teardown! [this test])
-
-  (close! [_ test]))
-
-(defn nebula-test
-  "Given an options map from the command-line runner (e.g. :nodes, :ssh,
-  :concurrency, ...), constructs a test map."
-  [opts]
+(defn basic-test
+  "Sets up the test parameters common to all tests."
+  [options]
+  (info :opts options)
   (merge tests/noop-test
-         opts
-         {:name "Nebula"
-          :os   centos/os
-          :db   (db "v1.0.0")
-          :client (Client. nil)
-          :nemesis kill-node
-          :checker (checker/compose
-                     {:perf     (checker/perf)
-                      :timeline (timeline/html)
-                      :linear   (checker/linearizable {:model (model/register)
-                                                       :algorithm :linear})})
-          :generator (->> (gen/mix [r w])
-                          (gen/stagger 3)
-                          (gen/nemesis
-                            (gen/seq (cycle [(gen/sleep 5)
-                                             {:type :info, :f :start}
-                                             (gen/sleep 5)
-                                             {:type :info, :f :stop}])))
-                          (gen/time-limit (:time-limit opts)))}))
-
-(defn -main
-  "Handles command line arguments. Can either run a test, or a web server for
-  browsing results."
-  [& args]
-  (cli/run! (merge (cli/single-test-cmd {:test-fn nebula-test})
-                   (cli/serve-cmd))
-            args))
+    (dissoc options
+      :test-fns)
+    {:name    "basic-test"
+     :os      centos/os
+     :db      (db "v1.0.0")
+     :nemesis (:nemesis options)}))

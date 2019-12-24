@@ -17,12 +17,17 @@ fi
 # TODO: assert that SSH_PRIVATE_KEY==~/.ssh/id_rsa
 
 cat <<EOF 
+
 ==================================
 Welcome to Nebula-Jepsen on Docker
-        Hello from Freddie
+
+-t <NAME> or --test <NAME> to select a test
+--nemesis <NAME> to select a nemesis
+--time-limit <TIME> to set test time
+Tests: register multi-key
+Nemesises: noop(default) kill-node partition-random-node
+Example:
+lein run test -t register --nemesis kill-node --time-limit 60
 ==================================
-cd /jepsen_dev/nebula
-then
-lein run test
-or whatever you want
+
 EOF

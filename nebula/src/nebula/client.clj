@@ -31,11 +31,14 @@
            :space             default-space}
           opts)))
 
-(defn put
+(defn nput
   ([storageClient k v]
     (.put storageClient default-space k v)))
 
-(defn get
+(defn nget
   ([storageClient k]
     (.get storageClient default-space k)))
 
+(defn ncas
+  ([storageClient k v v']
+    (.cas storageClient default-space k v v')))

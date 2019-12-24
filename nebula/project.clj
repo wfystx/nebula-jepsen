@@ -2,7 +2,7 @@
   :description "A Jepsen test for nebula"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
-  :main nebula.core
+  :main nebula.runner
   :dependencies [[org.clojure/clojure "1.10.0"]
                  [jepsen "0.1.15-SNAPSHOT"]]
   :resource-paths ["lib/*" "lib/guava/*"]
