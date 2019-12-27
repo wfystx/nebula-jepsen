@@ -1,0 +1,4 @@
+30 9 * * * /jepsen/cron/cas_partition.sh
+00 15 * * * /jepsen/cron/cas_kill.sh
+30 20 * * * /jepsen/cron/multi_partition.sh
+00 2 * * * /jepsen/cron/multi_kill.sh

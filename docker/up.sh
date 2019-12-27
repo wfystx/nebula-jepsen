@@ -48,9 +48,6 @@ function start() {
     if [ -d "data/" ];then
         rm -rf data/*
     fi
-    if [ -d "logs/" ];then
-        rm -rf logs/*
-    fi
     
     docker build -t wfystx/nebula-node:latest -f ./node/Dockerfile ./node/
 
